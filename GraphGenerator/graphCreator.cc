@@ -278,7 +278,7 @@ int graphCreator::main(const graphCreator::cmdLineOptions& myOptions){
       // "-> doSomething -> soSomething"
       const std::string keyphrase = "-> ";
       keyword_finder = currentLine.find(keyphrase);
-      if(std::string::npos != keyword_finder){ // found it
+      if(0 == keyword_finder){ // found it - has to be beginning of line
         std::string callLine = currentLine.substr(keyword_finder+keyphrase.size());
         // find next occurance
         const std::string dividerString = " -> ";
