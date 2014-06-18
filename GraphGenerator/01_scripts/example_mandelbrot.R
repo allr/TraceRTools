@@ -1,3 +1,8 @@
+# This is a copy of the mandelbrot-example.
+# It was copied from
+# https://github.com/allr/tracer/blob/master/demos/mandelbrot.R
+# at commit c9123942b69647095ab0dc921f6d8038065f3b96
+
 # resolution and iteration count constants
 XRES = 1000
 YRES = 1000
