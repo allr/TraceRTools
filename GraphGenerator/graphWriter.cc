@@ -188,11 +188,22 @@ std::string graphCreator::graphWriterGraphML::cleanupScopeName(std::string oldSt
     stringIterator++
     )
   {
-    if (*stringIterator == '<'){
+    switch (*stringIterator) {
+    case '<':
       convertStream << "&lt;";
-    }
-    else{
+      break;
+
+    case '>':
+      convertStream << "&gt;";
+      break;
+
+    case '&':
+      convertStream << "&amp;";
+      break;
+
+    default:
       convertStream << *stringIterator;
+      break;
     }
   } // for all chars
   return convertStream.str();
