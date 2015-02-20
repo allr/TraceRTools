@@ -98,24 +98,6 @@ namespace graphCreator{
   };
   
   /*!
-   * \brief check whether given argument contains the requested option
-   *
-   * This function checks whether the passed argument containts the requested
-   * option and tries to extract it. This only works for --longoptions=.
-   * Return Value is true if the argument was found and false, if not.
-   * This can be used to check whether one argument is known at all
-   * (by checking it against all expected searchstrings and ORing the results
-   *
-   * If the argument is not found, the targetString remains unchanged.
-   * This allows for default options of operator preference.
-   */
-  bool extractCmdOption(
-    const std::string& argValue, 
-    const std::string& searchString,
-    std::string& targetString
-    );
-  
-  /*!
    * \brief extract cmdlineOptions from cmdline
    *
    * This function takes the standard argc/argv-combination
@@ -123,9 +105,6 @@ namespace graphCreator{
    * via cmdline from it.
    */
   cmdLineOptions extractCmdLine(int argc, char* argv[]);
-  
-  //! print short help on command line options
-  void printHelp(const std::string& programName);
   
   
   //! inner main

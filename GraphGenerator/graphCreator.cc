@@ -13,6 +13,7 @@
 #include <fstream>
 #include <sstream>
 #include <utility> // make_pair
+#include <argp.h>
 
 #include <cstdlib>
 
@@ -315,24 +316,55 @@ int graphCreator::main(const graphCreator::cmdLineOptions& myOptions){
    */
 }
 
-bool graphCreator::extractCmdOption(
-  const std::string& argValue, 
-  const std::string& searchString,
-  std::string& targetString
-  )
-{
-  unsigned int searchStringLength=searchString.size();
-  if (
-    (0==argValue.find(searchString)) &&
-    (searchStringLength < argValue.size())
-    )
-  {
-    targetString = argValue.substr(searchStringLength);
+static struct argp_option my_opts[] = {
+  { "inputFile",   'i', "FILE", 0, "read input from FILE (default stdin)",  0 },
+  { "outFile",     'o', "FILE", 0, "write output to FILE (default stdout)", 1 },
+  { "contextOut",  'c', "FILE", 0, "write context output to FILE",          2 },
+  { "timerFile",   't', "FILE", 0, "read TimeR-table from FILE",            3 },
+  { "mappingFile", 'm', "FILE", 0, "read timeR->scope mapping from FILE",   4 },
+  //  { "filterFile",  'f', "FILE", 0, "read filters from FILE",                5 }, // appears to be unimplemented
+  { 0 }
+};
+
+static char my_doc[] = "graphCreator - converting from here to there";
+
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+  graphCreator::cmdLineOptions *returnValue = (graphCreator::cmdLineOptions *)state->input;
+
+  switch (key) {
+  case 'i':
+    returnValue->debugScopesFile = arg;
+    break;
+
+  case 'o':
+    returnValue->graphOutputFile = arg;
+    break;
+
+  case 'c':
+    returnValue->contextGraphOutputFile = arg;
+    break;
+
+  case 't':
+    returnValue->timerFile = arg;
+    break;
+
+  case 'm':
+    returnValue->mappingFile = arg;
+    break;
+
+  case ARGP_KEY_ARG:
+    argp_error(state, "did not expect any additional arguments");
+    break;
+
+  default:
+    return ARGP_ERR_UNKNOWN;
   }
+  return 0;
 }
 
+static struct argp my_argp = { my_opts, parse_opt, 0, my_doc };
+
 graphCreator::cmdLineOptions graphCreator::extractCmdLine(int argc, char* argv[]){
-  // note: this is very simple and only allows for "--foo=value" passing
   cmdLineOptions returnValue;
   { // set default values
     returnValue.timerFile = "NULL";
@@ -341,97 +373,12 @@ graphCreator::cmdLineOptions graphCreator::extractCmdLine(int argc, char* argv[]
     returnValue.graphOutputFile = "/dev/stdout";
     returnValue.contextGraphOutputFile = "/dev/null";
   }
-  
-  
-  // #define DEBUG_CMDLINEEXTRACTION
-  #undef DEBUG_CMDLINEEXTRACTION
-  #ifdef DEBUG_CMDLINEEXTRACTION
-  {
-    std::cout << "argument count: " << std::dec << argc << std::endl;
-  }
-  #endif // DEBUG_CMDLINEEXTRACTION
-  unsigned int curArgIndex;
-  for (
-    curArgIndex = 1; // zero is command name and can be skipped
-    curArgIndex < argc;
-    curArgIndex++
-    )
-  { // for all arguments
-    std::string curArg = argv[curArgIndex];
-    #ifdef DEBUG_CMDLINEEXTRACTION
-    {
-      std::cout << "Arg "<<std::dec << curArgIndex << " : " << curArg << std::endl;
-    }
-    #endif // DEBUG_CMDLINEEXTRACTION
-    { // check for help request
-      if("--help"==curArg){
-        printHelp(argv[0]);
-        exit(EXIT_SUCCESS);
-      }
-    }
-    { // check for timerFile
-      graphCreator::extractCmdOption(
-        curArg,
-        "--timerFile=",
-        returnValue.timerFile
-        );
-    }
-    { // check for inputFile
-      graphCreator::extractCmdOption(
-        curArg,
-        "--inputFile=",
-        returnValue.debugScopesFile
-        );
-    }
-    { // check for mappingfile
-      graphCreator::extractCmdOption(
-        curArg,
-        "--mappingFile=",
-        returnValue.mappingFile
-        );
-    }
-    { // check for outputfile
-      graphCreator::extractCmdOption(
-        curArg,
-        "--outFile=",
-        returnValue.graphOutputFile
-        );
-    }
-    { // check for context graph output file
-        graphCreator::extractCmdOption(
-          curArg,
-          "--contextOut=",
-          returnValue.contextGraphOutputFile
-          );
-    } // graph output file?
-  } // for all arguments
-  //#define DEBUG_CMDLINEEXTRACTION
-  #undef DEBUG_CMDLINEEXTRACTION
-  #ifdef DEBUG_CMDLINEEXTRACTION
-  {
-    std::cout << "--- extracted CmdLineOptions:" << std::endl;
-    std::cout << "Timerfile: " << returnValue.timerFile << std::endl;
-    std::cout << "Inputfile: " << returnValue.debugScopesFile << std::endl;
-    std::cout << "Mappingfile: " << returnValue.mappingFile << std::endl;
-    std::cout << "Outputfile: " << returnValue.graphOutputFile << std::endl;
-    std::cout << "--- extracted CmdLineOptions (end)" << std::endl;
-  }
-  #endif // DEBUG_CMDLINEEXTRACTION
-  return returnValue;
-}
 
-void graphCreator::printHelp(const std::string& programName){
-  using std::cout; using std::endl;
-  cout << "Usage: " << programName << " [..Options..]" << endl;
-  cout << "  --inputFile=<file>       Use <file> as input (/dev/stdin)" << endl;
-  cout << "  --outFile=<file>         Write output to <file> (/dev/stdout)" << endl;
-  cout << "  --contextOut=<file>      Write context output to <file> (/dev/null)" << endl;
-  cout << "  --timerFile=<file>       Read TimeR-table from <file> (NULL)" << endl;
-  cout << "  --mappingFile=<file>     Read timerR->Scope-Mapping from <file>" << endl;
-  cout << "  --filterFile=<file>      Read Filters from <file>" << endl;
-  cout << endl;
-  cout << "  --help                   You just used it; you should know what it does" << endl;
-  cout << endl;
+  if (argp_parse(&my_argp, argc, argv, 0, 0, &returnValue)) {
+    exit(1);
+  }
+
+  return returnValue;
 }
 
 int main(int argc, char* argv[]){
